@@ -28,26 +28,19 @@ button_2 = machine.Pin(4, machine.Pin.IN, machine.Pin.PULL_UP)
 button_3 = machine.Pin(17, machine.Pin.IN, machine.Pin.PULL_UP)
 led = machine.Pin(5, machine.Pin.OUT)
 led_1 = machine.Pin(23, machine.Pin.OUT)
-# --- Конфигурация ---
 TIME_FILE = "time.json"
-NTP_HOST = "pool.ntp.org" # Хост для получения времени
-KRASNOYARSK_TIMEZONE = 7   # Красноярск: UTC+7
-TIME_UPDATE_INTERVAL = 40 * 1000  # 10 секунд в миллисекундах
-last_sync_time = 0  # Время последней синхронизации
-
-# --- Функция для получения времени из сети ---
+NTP_HOST = "pool.ntp.org"
+KRASNOYARSK_TIMEZONE = 7  
+TIME_UPDATE_INTERVAL = 40 * 1000 
+last_sync_time = 0 
 def get_network_time():
-    """Получает время из сети и возвращает его в формате (год, месяц, день, час, минута, секунда, день недели, год. день)"""
     try:
         ntptime.settime()
         return time.localtime()
     except Exception as e:
         print("Error getting network time:", e)
         return None
-
-# --- Функция для сохранения времени в JSON-файл ---
 def save_time_to_json(hour, minute):
-    """Сохраняет час и минуту в JSON-файл."""
     try:
         with open(TIME_FILE, 'w') as f:
             json.dump({'hour': hour, 'minute': minute}, f)
@@ -55,33 +48,33 @@ def save_time_to_json(hour, minute):
     except Exception as e:
         print("Error saving time: {}".format(e))
 
-# --- Функция для загрузки времени из JSON-файла ---
+
 def load_time_from_json():
-    """Загружает час и минуту из JSON-файла.  Возвращает (час, минута) или None, если файл не найден."""
+ 
     try:
         with open(TIME_FILE, 'r') as f:
             data = json.load(f)
             return data['hour'], data['minute']
     except OSError:
         print("Time file not found, using default time")
-        return None  # Файл не найден
+        return None  
     except Exception as e:
         print("Error loading time: {}".format(e))
         return None
 
-# --- Функция для синхронизации времени ---
+
 def sync_time(timer):
-    """Синхронизирует время с сетью и сохраняет его в файл."""
+
     global last_sync_time
-    if root_wifi_conn:  # Если есть подключение к Wi-Fi
+    if root_wifi_conn: 
         try:
             utc_time = get_network_time()
             if utc_time:
-                hour = (utc_time[3] + KRASNOYARSK_TIMEZONE) % 24  # Применяем часовой пояс Красноярска
+                hour = (utc_time[3] + KRASNOYARSK_TIMEZONE) % 24  
                 minute = utc_time[4]
-                save_time_to_json(hour, minute)  # Сохраняем полученное время
+                save_time_to_json(hour, minute)  
                 print("Time synchronized from network (Krasnoyarsk)")
-                last_sync_time = time.time() # Store the time
+                last_sync_time = time.time() 
             else:
                 print("Failed to get network time")
         except Exception as e:
@@ -89,9 +82,9 @@ def sync_time(timer):
     else:
         print("No Wi-Fi connection, skipping time synchronization")
 
-# --- Функция time_clock (с использованием JSON и сети) ---
+
 def time_clock(root_wifi_conn):
-    """Возвращает текущее время в формате HH:MM.  Использует время из JSON-файла или дефолтное значение, если файл не найден."""
+ 
     hour = 0
     minute = 0
     saved_time = load_time_from_json()
@@ -103,9 +96,9 @@ def time_clock(root_wifi_conn):
     time_str = "{:02d}:{:02d}".format(hour, minute)
     return time_str
 
-# --- Инициализация таймера ---
-timer = machine.Timer(-1)  # Используем Timer ID -1
-timer.init(period=TIME_UPDATE_INTERVAL, mode=machine.Timer.PERIODIC, callback=sync_time) # Вызываем sync_time каждые 10 сек
+
+timer = machine.Timer(-1)  
+timer.init(period=TIME_UPDATE_INTERVAL, mode=machine.Timer.PERIODIC, callback=sync_time)
 
 icon_k = [20,40,60,80,100]
 
